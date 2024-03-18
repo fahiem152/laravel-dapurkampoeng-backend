@@ -8,11 +8,20 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function index()
-    {
-        $products = Product::latest()->paginate(10);
-        return view('pages.products.index', compact('products'));
-    }
+
+    public function index(Request $request)
+{
+    $products = Product::query()
+        ->select('products.*', 'categories.name as category_name')
+        ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+        ->when($request->input('name'), function ($query, $name) {
+            $query->where('products.name', 'like', '%' . $name . '%');
+                // ->orWhere('products.email', 'like', '%' . $name . '%');
+        })
+        ->paginate(10);
+
+    return view('pages.products.index', compact('products'));
+}
     public function create()
     {
         $categories = DB::table('categories')->get();
